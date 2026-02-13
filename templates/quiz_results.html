@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Quiz Results - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">📊 Quiz Results: {{ quiz.title }}</h1>
+
+<a href="{{ url_for('teacher_dashboard') }}" class="btn btn-secondary mb-3">← Back to Dashboard</a>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Submissions</h5>
+            </div>
+            <div class="card-body">
+                {% if submissions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in submissions %}
+                            <tr>
+                                <td><strong>{{ submission.student.username }}</strong></td>
+                                <td>{{ submission.score }}/{{ submission.total_marks }}</td>
+                                <td>
+                                    {% set percentage = (submission.score / submission.total_marks * 100)|round|int %}
+                                    <span class="badge {% if percentage >= 80 %}bg-success{% elif percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ percentage }}%
+                                    </span>
+                                </td>
+                                <td>{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Statistics -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Submissions</h6>
+                                <p class="display-4">{{ submissions|length }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">Average Score</h6>
+                                <p class="display-4">
+                                    {% set avg = (submissions|map(attribute='score')|sum / submissions|length)|round(1) %}
+                                    {{ avg }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">Highest Score</h6>
+                                <p class="display-4">{{ submissions|map(attribute='score')|max }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">Lowest Score</h6>
+                                <p class="display-4">{{ submissions|map(attribute='score')|min }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">No submissions yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

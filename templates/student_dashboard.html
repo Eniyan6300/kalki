@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard - Quiz App{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">👨‍🎓 Student Dashboard</h1>
+
+<!-- Quick Links -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('student_results') }}" class="btn btn-info btn-lg">
+            📊 View My Results
+        </a>
+    </div>
+</div>
+
+<!-- Available Quizzes -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">📝 Available Quizzes</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_quizzes %}
+                <div class="row">
+                    {% for quiz in pending_quizzes %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ quiz.title }}</h5>
+                                <p class="card-text text-muted">{{ quiz.description[:100] }}{% if quiz.description|length > 100 %}...{% endif %}</p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        ⏱️ Duration: {{ quiz.duration_minutes }} minutes | 
+                                        📊 Total Marks: {{ quiz.total_marks }}
+                                    </small>
+                                </p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        ❓ Questions: {{ quiz.questions|length }}
+                                    </small>
+                                </p>
+                                <a href="{{ url_for('start_quiz', quiz_id=quiz.id) }}" class="btn btn-success btn-sm">
+                                    ▶️ Start Quiz
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info" role="alert">
+                    <p class="mb-0">No quizzes available at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completed Quizzes -->
+{% if completed_quizzes %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">✅ Completed Quizzes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Quiz Title</th>
+                                <th>Your Score</th>
+                                <th>Percentage</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in completed_quizzes %}
+                            <tr>
+                                <td><strong>{{ submission.quiz.title }}</strong></td>
+                                <td>{{ submission.score }}/{{ submission.total_marks }}</td>
+                                <td>
+                                    {% set percentage = (submission.score / submission.total_marks * 100)|round|int %}
+                                    <span class="badge {% if percentage >= 80 %}bg-success{% elif percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ percentage }}%
+                                    </span>
+                                </td>
+                                <td>{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

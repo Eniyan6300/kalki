@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard - Quiz App{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">👨‍🏫 Teacher Dashboard</h1>
+
+<!-- Statistics Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Quizzes</h5>
+                <p class="card-text display-4">{{ total_quizzes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total Questions</h5>
+                <p class="card-text display-4">{{ total_questions }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Quiz Button -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('create_quiz') }}" class="btn btn-success btn-lg">
+            ➕ Create New Quiz
+        </a>
+    </div>
+</div>
+
+<!-- Quizzes List -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Your Quizzes</h5>
+            </div>
+            <div class="card-body">
+                {% if quizzes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Quiz Title</th>
+                                <th>Questions</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for quiz in quizzes %}
+                            <tr>
+                                <td><strong>{{ quiz.title }}</strong></td>
+                                <td>{{ quiz.questions|length }}</td>
+                                <td>{{ quiz.duration_minutes }} min</td>
+                                <td>
+                                    {% if quiz.is_published %}
+                                    <span class="badge bg-success">Published</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ quiz.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-primary">✏️ Edit</a>
+                                        
+                                        {% if quiz.is_published %}
+                                        <a href="{{ url_for('quiz_results', quiz_id=quiz.id) }}" class="btn btn-sm btn-info">📊 Results</a>
+                                        {% else %}
+                                        <form method="POST" action="{{ url_for('publish_quiz', quiz_id=quiz.id) }}" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-success">📤 Publish</button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        <form method="POST" action="{{ url_for('delete_quiz', quiz_id=quiz.id) }}" style="display:inline;" onsubmit="return confirm('Delete this quiz?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info" role="alert">
+                    <p class="mb-0">No quizzes created yet. <a href="{{ url_for('create_quiz') }}">Create your first quiz!</a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

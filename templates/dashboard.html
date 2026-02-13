@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            width: 400px;
+            margin: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: block;
+            padding: 10px;
+            margin: 10px 0;
+            background: #1abc9c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background: #16a085;
+        }
+
+        .logout {
+            background: crimson;
+        }
+
+        .logout:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Welcome {{ username }}</h2>
+    <p><b>Role:</b> {{ role }}</p>
+
+    <!-- ADMIN BUTTONS -->
+    {% if role == 'Admin' %}
+        <a href="#" class="btn">Manage Users</a>
+        <a href="#" class="btn">Manage Quiz</a>
+    {% endif %}
+
+    <!-- TEACHER BUTTONS -->
+    {% if role == 'Teacher' %}
+        <a href="#" class="btn">Create Quiz</a>
+        <a href="#" class="btn">View Results</a>
+    {% endif %}
+
+    <!-- STUDENT BUTTONS -->
+    {% if role == 'Student' %}
+        <a href="#" class="btn">Attend Quiz</a>
+        <a href="#" class="btn">View Score</a>
+    {% endif %}
+
+    <a href="{{ url_for('logout') }}" class="btn logout">Logout</a>
+</div>
+
+</body>
+</html>

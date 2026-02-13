@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Add Question - Teacher{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">➕ Add Question to: {{ quiz.title }}</h1>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary">← Back to Quiz</a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-4 border-primary">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Generate Questions with AI</h5>
+                <form method="POST" action="{{ url_for('generate_questions', quiz_id=quiz.id) }}">
+                    <div class="mb-3">
+                        <label for="topic" class="form-label">Heading / Topic *</label>
+                        <input type="text" class="form-control" id="topic" name="topic" placeholder="Example: Python Basics" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="ai_question_type" class="form-label">Question Type</label>
+                            <select class="form-select" id="ai_question_type" name="question_type" required>
+                                <option value="mcq">Multiple Choice (MCQ)</option>
+                                <option value="true_false">True/False</option>
+                                <option value="short_answer">Short Answer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="question_count" class="form-label">No. of Questions</label>
+                            <input type="number" class="form-control" id="question_count" name="question_count" value="5" min="1" max="20" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="ai_marks" class="form-label">Marks per Question</label>
+                            <input type="number" class="form-control" id="ai_marks" name="marks" value="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="difficulty" class="form-label">Difficulty</label>
+                            <select class="form-select" id="difficulty" name="difficulty">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="output_language" class="form-label">Language</label>
+                            <select class="form-select" id="output_language" name="output_language">
+                                <option value="English" selected>English</option>
+                                <option value="Tamil">Tamil</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="syllabus_scope" class="form-label">Syllabus Focus</label>
+                            <input type="text" class="form-control" id="syllabus_scope" name="syllabus_scope" placeholder="Unit 2, Chapter 4">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Generate and Add to Quiz</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Add Question Manually</h5>
+                <form method="POST" id="questionForm">
+                    <div class="mb-3">
+                        <label for="question_text" class="form-label">Question Text *</label>
+                        <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="question_type" class="form-label">Question Type *</label>
+                        <select class="form-select" id="question_type" name="question_type" required onchange="updateQuestionType()">
+                            <option value="">-- Select Type --</option>
+                            <option value="mcq">Multiple Choice (MCQ)</option>
+                            <option value="true_false">True/False</option>
+                            <option value="short_answer">Short Answer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="marks" class="form-label">Marks</label>
+                        <input type="number" class="form-control" id="marks" name="marks" value="1" min="1">
+                    </div>
+                    
+                    <!-- MCQ Options -->
+                    <div id="mcqSection" style="display:none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6>Add Options</h6>
+                                <div id="optionsContainer"></div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOption()">+ Add Option</button>
+                                
+                                <div class="mt-3">
+                                    <label class="form-label">Mark Correct Answer</label>
+                                    <select class="form-select" id="correct_option" name="correct_option">
+                                        <option value="">-- Select Correct Option --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- True/False Answer -->
+                    <div id="tfSection" style="display:none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <label class="form-label">Correct Answer</label>
+                                <select class="form-select" name="correct_answer" id="correct_answer_tf">
+                                    <option value="">-- Select Answer --</option>
+                                    <option value="True">True</option>
+                                    <option value="False">False</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Short Answer -->
+                    <div id="saSection" style="display:none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <label for="correct_answer_sa" class="form-label">Sample Correct Answer (for reference)</label>
+                                <input type="text" class="form-control" id="correct_answer_sa" name="correct_answer">
+                                <small class="text-muted">Note: Short answer questions will be manually graded by the teacher.</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">✅ Add Question</button>
+                        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let optionCount = 0;
+
+function updateQuestionType() {
+    const type = document.getElementById('question_type').value;
+    document.getElementById('mcqSection').style.display = type === 'mcq' ? 'block' : 'none';
+    document.getElementById('tfSection').style.display = type === 'true_false' ? 'block' : 'none';
+    document.getElementById('saSection').style.display = type === 'short_answer' ? 'block' : 'none';
+    
+    if (type === 'mcq' && optionCount === 0) {
+        addOption();
+        addOption();
+    }
+}
+
+function addOption() {
+    const container = document.getElementById('optionsContainer');
+    const index = optionCount++;
+    
+    const optionHtml = `
+        <div class="input-group mb-2" id="option${index}">
+            <input type="text" class="form-control" name="option" placeholder="Option ${index + 1}" required>
+            <button type="button" class="btn btn-outline-danger" onclick="removeOption(${index})">Remove</button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', optionHtml);
+    updateCorrectOptionSelect();
+}
+
+function removeOption(index) {
+    const option = document.getElementById(`option${index}`);
+    if (option) {
+        option.remove();
+        updateCorrectOptionSelect();
+    }
+}
+
+function updateCorrectOptionSelect() {
+    const select = document.getElementById('correct_option');
+    const options = document.querySelectorAll('#optionsContainer .input-group input');
+    
+    select.innerHTML = '<option value="">-- Select Correct Option --</option>';
+    options.forEach((opt, index) => {
+        const value = opt.value || `Option ${index + 1}`;
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = value || `Option ${index + 1}`;
+        select.appendChild(option);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('questionForm').addEventListener('input', updateCorrectOptionSelect);
+});
+</script>
+{% endblock %}

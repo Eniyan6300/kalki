@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Generate Questions with AI - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">🤖 AI Question Generator</h1>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary">← Back to Quiz</a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Step 1: Topic Input -->
+        {% if step == 'topic' %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📚 Step 1: Enter Topic</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="topic" class="form-label">What topic should the questions be about?</label>
+                        <input type="text" class="form-control form-control-lg" id="topic" name="topic" 
+                               placeholder="e.g., Biology, History, Mathematics..." required autofocus>
+                        <small class="text-muted">Be specific for better results. Example: 'Photosynthesis in plants' or 'World War 2'</small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="ask_count" class="btn btn-primary btn-lg">
+                            ➜ Next
+                        </button>
+                        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-secondary btn-lg">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Step 2: Number of Questions -->
+        {% if step == 'count' %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">❓ Step 2: How Many Questions?</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Topic:</strong> {{ topic }}
+                </div>
+                
+                <form method="POST">
+                    <input type="hidden" name="topic" value="{{ topic }}">
+                    
+                    <div class="mb-3">
+                        <label for="num_questions" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control form-control-lg" id="num_questions" 
+                               name="num_questions" min="1" max="20" value="5" required>
+                        <small class="text-muted">Generate between 1-20 questions at a time</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="marks" class="form-label">Marks per Question</label>
+                        <input type="number" class="form-control" id="marks" name="marks" 
+                               min="1" max="10" value="1" required>
+                        <small class="text-muted">Usually 1-5 marks per question</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="difficulty" class="form-label">Difficulty</label>
+                        <select class="form-select" id="difficulty" name="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="output_language" class="form-label">Language</label>
+                        <select class="form-select" id="output_language" name="output_language">
+                            <option value="English" selected>English</option>
+                            <option value="Tamil">Tamil</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="syllabus_scope" class="form-label">Syllabus Focus (Optional)</label>
+                        <input type="text" class="form-control" id="syllabus_scope" name="syllabus_scope"
+                               placeholder="e.g., Unit 3, Newton's Laws">
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        ⏳ <strong>This may take 10-30 seconds.</strong> Please wait for AI to generate questions...
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="generate" class="btn btn-success btn-lg" id="generateBtn">
+                            ✨ Generate Questions
+                        </button>
+                        <button type="submit" name="action" value="ask_count" formnovalidate class="btn btn-secondary btn-lg">
+                            ← Back
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Step 3: Review and Select Questions -->
+        {% if step == 'review' and questions %}
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">✅ Step 3: Review & Select Questions</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <strong>AI Generated {{ questions|length }} Questions</strong> about "{{ topic }}"
+                    <div><small>Difficulty: {{ difficulty or 'medium' }} | Language: {{ output_language or 'English' }}</small></div>
+                </div>
+                
+                <form method="POST" action="{{ url_for('add_generated_questions', quiz_id=quiz.id) }}" id="selectForm">
+                    {% for question in questions %}
+                    <div class="card mb-3 border-muted" id="question_{{ loop.index0 }}">
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input question-checkbox" type="checkbox" 
+                                       id="q{{ loop.index0 }}" 
+                                       data-question="{{ loop.index0 }}"
+                                       checked>
+                                <label class="form-check-label" for="q{{ loop.index0 }}">
+                                    <strong>Question {{ loop.index }}:</strong> {{ question.question_text }}
+                                </label>
+                            </div>
+                            
+                            <div class="ms-4">
+                                <p class="text-muted mb-2">Options:</p>
+                                <ul class="list-group mb-3">
+                                    {% for option in question.options %}
+                                    <li class="list-group-item {% if loop.index0 == question.correct_option_index %}bg-success-subtle border-success{% endif %}">
+                                        <strong>{{ "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[loop.index0] }}.</strong> {{ option }}
+                                        {% if loop.index0 == question.correct_option_index %}
+                                        <span class="badge bg-success float-end">✓ Correct</span>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            
+                            <div class="text-muted">
+                                <small>Marks: <strong>{{ marks }}</strong></small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Hidden JSON field to store selected questions -->
+                    <input type="hidden" id="questions_json" name="questions" value="">
+                    
+                    <div class="alert alert-info">
+                        <small><strong>Selected:</strong> <span id="selected-count">{{ questions|length }}</span> / {{ questions|length }} questions</small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg" id="addBtn">
+                            ✅ Add Selected to Quiz
+                        </button>
+                        <a href="{{ url_for('generate_questions_page', quiz_id=quiz.id) }}" class="btn btn-secondary btn-lg">
+                            ← Start Over
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if step == 'review' and not questions %}
+        <div class="alert alert-warning">
+            <strong>⚠️ No questions generated.</strong> Please try again with a different topic.
+        </div>
+        <a href="{{ url_for('generate_questions_page', quiz_id=quiz.id) }}" class="btn btn-secondary">← Start Over</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Handle question selection
+document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelection);
+});
+
+function updateSelection() {
+    const selectedQuestions = [];
+    const allQuestionsData = {{ questions|tojson if questions else '[]' }};
+    
+    document.querySelectorAll('.question-checkbox:checked').forEach(checkbox => {
+        const idx = parseInt(checkbox.dataset.question);
+        selectedQuestions.push(allQuestionsData[idx]);
+    });
+    
+    // Update count
+    document.getElementById('selected-count').textContent = selectedQuestions.length;
+    
+    // Update form data
+    document.getElementById('questions_json').value = JSON.stringify(selectedQuestions);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const selectForm = document.getElementById('selectForm');
+    if (selectForm) {
+        updateSelection();
+        
+        // Update JSON before form submission
+        selectForm.addEventListener('submit', function(e) {
+            const selectedQuestions = [];
+            const allQuestionsData = {{ questions|tojson if questions else '[]' }};
+            
+            document.querySelectorAll('.question-checkbox:checked').forEach(checkbox => {
+                const idx = parseInt(checkbox.dataset.question);
+                selectedQuestions.push(allQuestionsData[idx]);
+            });
+            
+            document.getElementById('questions_json').value = JSON.stringify(selectedQuestions);
+        });
+    }
+    
+    // Disable button during generation
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '⏳ Generating...';
+        });
+    }
+});
+</script>
+{% endblock %}
+
